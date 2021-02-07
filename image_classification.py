@@ -8,10 +8,9 @@ from torch.optim.lr_scheduler import ReduceLROnPlateau, StepLR
 import numpy as np
 from torch.utils.data import DataLoader, ConcatDataset
 from utils.util import *
-from utils.gradual_domain_adaptation import *
-from data_loader.data_loader import HornetDataset
+from data_loader.data_loader import HornetDataset, HornetTestDataset
 import torchvision.models as models
-from trainer.train import train, test
+from trainer.train import train, test, predict
 
 
 def main():
@@ -19,7 +18,7 @@ def main():
     parser = argparse.ArgumentParser(description='Image Classification')
     parser.add_argument('--batch-size', type=int, default=64, metavar='N',
                         help='input batch size for training (default: 64)')
-    parser.add_argument('--epochs', type=int, default=50, metavar='N',
+    parser.add_argument('--epochs', type=int, default=10, metavar='N',
                         help='number of epochs to train (default: 20)')
     parser.add_argument('--lr', type=float, default=1e-5, metavar='LR',
                         help='learning rate (default: 1.0)')
@@ -31,7 +30,7 @@ def main():
                         help='For Saving the current Model')
     parser.add_argument('--retrain-base', type=bool, default=True,
                         help='whether retrain the base classifier')
-    parser.add_argument('--log-interval', type=int, default=10, metavar='N',
+    parser.add_argument('--log-interval', type=int, default=4, metavar='N',
                         help='how many batches to wait before logging training status')
     args = parser.parse_args()
 
@@ -48,7 +47,9 @@ def main():
 
     # load train data
     train_set = HornetDataset()
+    test_set = HornetTestDataset()
     train_loader = DataLoader(train_set, **kwargs)
+    test_loader = DataLoader(test_set, **kwargs)
     print("Finish loading training data.")
 
     # train base model
@@ -68,18 +69,16 @@ def main():
         torch.save(model.state_dict(), "saved/model/alex_hornet.pt")
         print("Model saved.")
 
-    # # load weights and do experiments
-    # num_classes = 7
+    # load weights and do experiments
     # model = models.alexnet(pretrained=True).to(device)
-    # model.classifier[6] = nn.Linear(4096, num_classes).to(device)
-    # model.load_state_dict(torch.load(
-    #     f"saved/models/PACS/alex_base_{args.classtype}.pt"))
+    # model.classifier[6] = nn.Linear(4096, 2).to(device)
+    # model.load_state_dict(torch.load("saved/model/alex_hornet.pt"))
     # model.eval()
     # print("Finish loading weights.")
 
-    # # directly test on photos
-    # print("##### Directly test on photos #####")
-    # test(model, device, test_loader)
+    # directly test on photos
+    print("Directly test on photos")
+    predict(model, device, test_loader)
 
 
 if __name__ == '__main__':

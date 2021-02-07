@@ -11,9 +11,10 @@ def train(log_interval, model, device, train_loader, optimizer, epoch):
 
         data, target = data.to(device), target.to(device)
         optimizer.zero_grad()
-        output = model(data.float())
+        output = model(data.float().permute(0, 3, 1, 2))
         criterian = nn.CrossEntropyLoss()
-        loss = criterian(output, target.flatten().type(torch.cuda.LongTensor))
+        # .type(torch.cuda.LongTensor)
+        loss = criterian(output, target.flatten().type(torch.long))
         _, preds = torch.max(output, dim=1)
         loss.backward()
         optimizer.step()
@@ -33,10 +34,10 @@ def test(model, device, test_loader):
     with torch.no_grad():
         for data, target in test_loader:
             data, target = data.to(device), target.to(device)
-            output = model(data.float())
+            output = model(data.float().permute(0, 3, 1, 2))
             # sum up batch loss
             test_loss += criterian(output,
-                                   target.flatten().type(torch.cuda.LongTensor)).item()
+                                   target.flatten().type(torch.long)).item()
             # get the index of the max log-probability
             pred = output.argmax(dim=1, keepdim=True)
             correct += pred.eq(target.view_as(pred)).sum().item()
@@ -47,3 +48,14 @@ def test(model, device, test_loader):
         test_loss, correct, len(test_loader.dataset),
         100. * correct / len(test_loader.dataset)))
     return test_loss
+
+
+def predict(model, device, test_loader):
+    model.eval()
+    with torch.no_grad():
+        for data, target in test_loader:
+            data, target = data.to(device), target.to(device)
+            output = model(data.float().permute(0, 3, 1, 2))
+            pred = output.argmax(dim=1, keepdim=True)
+
+    print('Prediction:\n', pred)
