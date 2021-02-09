@@ -48,7 +48,6 @@ def main():
 
     vectorizer = TfidfVectorizer()
     result = vectorizer.fit_transform(corpus[unk]).toarray()
-    # print(vectorizer.get_feature_names())
     print(result.shape)
 
     label = np.array(label)
@@ -60,8 +59,8 @@ def main():
     classifier.fit(X_train, y_train)
 
     y_pred = classifier.predict(X_test)
-    # proba = classifier.predict_log_proba(X_test)
-    # print(X_train)
+    proba = classifier.predict_log_proba(X_test)
+    print(X_train)
     report = classification_report(y_test, y_pred)
     print('\n Accuracy: ', accuracy_score(y_test, y_pred))
     print('\nClassification Report')
