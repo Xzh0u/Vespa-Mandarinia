@@ -1,6 +1,8 @@
 import torch
 import torch.nn as nn
+from torch.utils.tensorboard import SummaryWriter
 
+writer = SummaryWriter("./saved/log")
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
 
@@ -20,6 +22,8 @@ def train(log_interval, model, device, train_loader, optimizer, epoch):
         optimizer.step()
         running_corrects += torch.sum(preds == target.data)
         epoch_acc = running_corrects.double() / len(train_loader.dataset)
+        writer.add_scalar('Train/Loss', loss.item(), epoch)
+        writer.flush()
         if batch_idx % log_interval == 0:
             print('Train Epoch: {} [{}/{} ({:.0f}%)]\tLoss: {:.6f}\tAcc: {:.6f}'.format(
                 epoch, batch_idx * len(data), len(train_loader.dataset),
@@ -50,12 +54,20 @@ def test(model, device, test_loader):
     return test_loss
 
 
-def predict(model, device, test_loader):
+def predict(model, device, test_loader, test_set):
     model.eval()
+    prediction = []
     with torch.no_grad():
         for data, target in test_loader:
             data, target = data.to(device), target.to(device)
             output = model(data.float().permute(0, 3, 1, 2))
             pred = output.argmax(dim=1, keepdim=True)
+            prediction.append(pred.tolist()[0][0])
 
-    print('Prediction:\n', pred)
+    index = []
+    for idx, item in enumerate(prediction):
+        if item == 1:
+            index.append(idx)
+    for idx, item in enumerate(test_set.img_paths):
+        if idx in index:
+            print(item)

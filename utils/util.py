@@ -1,11 +1,13 @@
 import matplotlib.pyplot as plt
 import os
+import torch
 
 
 def imgshow(train_data):
-    for batch_idx, (inputs, labels) in enumerate(train_data):
+    for inputs, labels in train_data:
         plt.figure()
-        plt.imshow(inputs[batch_idx].numpy())
+        inputs = torch.reshape(inputs, (256, 256, 3))  # Temproary
+        plt.imshow(inputs.numpy())
         plt.show()
 
 

@@ -2,8 +2,10 @@ import torch.utils.data as data
 from utils.util import read_path
 import numpy as np
 import torch
-from skimage import io
 import cv2
+# from torch.utils.tensorboard import SummaryWriter
+from torchvision.utils import make_grid
+# writer = SummaryWriter("./saved/log")
 
 
 class HornetDataset(data.Dataset):
@@ -15,12 +17,15 @@ class HornetDataset(data.Dataset):
         self.target = [1] * len(positive_paths) + [0] * len(negative_paths)
         img_paths = positive_paths + negative_paths
         for img_path in img_paths:
-            image = io.imread(img_path) / 255.
+            image = cv2.imread(img_path) / 255.
             image = cv2.resize(image, (256, 256),
                                interpolation=cv2.INTER_AREA)
             if image.shape == (256, 256, 3):
                 self.data.append(image)
         self.data = np.asarray(self.data)
+        # grid = make_grid(self.data)
+        # writer.add_image('Dataset/Inspect input grid', grid, global_step=0)
+        # writer.close()
 
     def __len__(self):
         return list(self.data.shape)[0]
@@ -40,7 +45,7 @@ class HornetTestDataset(data.Dataset):
         self.target = [-1] * (len(positive_paths) + len(negative_paths))
         self.img_paths = positive_paths + negative_paths
         for img_path in self.img_paths:
-            image = io.imread(img_path) / 255.
+            image = cv2.imread(img_path) / 255.
             image = cv2.resize(image, (256, 256),
                                interpolation=cv2.INTER_AREA)
             if image.shape == (256, 256, 3):

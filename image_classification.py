@@ -1,16 +1,17 @@
 from __future__ import print_function
 import argparse
 import torch
-from skimage import io
 import torch.nn as nn
 import torch.optim as optim
-from torch.optim.lr_scheduler import ReduceLROnPlateau, StepLR
-import numpy as np
-from torch.utils.data import DataLoader, ConcatDataset
+from torch.utils.data import DataLoader
 from utils.util import *
 from data_loader.data_loader import HornetDataset, HornetTestDataset
 import torchvision.models as models
 from trainer.train import train, test, predict
+# from torch.utils.tensorboard import SummaryWriter
+import torchvision
+
+# writer = SummaryWriter("./saved/log")
 
 
 def main():
@@ -45,13 +46,13 @@ def main():
                        'pin_memory': True},
                       )
 
-    # load train data
+    # load train/test data
     train_set = HornetDataset()
     test_set = HornetTestDataset()
     train_loader = DataLoader(train_set, **kwargs)
-    test_loader = DataLoader(test_set, **kwargs)
+    test_loader = DataLoader(test_set, shuffle=False)
     print("Finish loading training data.")
-
+    # imgshow(test_loader)
     # train base model
     if args.retrain_base:
         model = models.alexnet(pretrained=True).to(device)
@@ -70,15 +71,15 @@ def main():
         print("Model saved.")
 
     # load weights and do experiments
-    # model = models.alexnet(pretrained=True).to(device)
-    # model.classifier[6] = nn.Linear(4096, 2).to(device)
-    # model.load_state_dict(torch.load("saved/model/alex_hornet.pt"))
-    # model.eval()
-    # print("Finish loading weights.")
+    model = models.alexnet(pretrained=True).to(device)
+    model.classifier[6] = nn.Linear(4096, 2).to(device)
+    model.load_state_dict(torch.load("saved/model/alex_hornet.pt"))
+    model.eval()
+    print("Finish loading weights.")
 
     # directly test on photos
     print("Directly test on photos")
-    predict(model, device, test_loader)
+    predict(model, device, test_loader, test_set)
 
 
 if __name__ == '__main__':
